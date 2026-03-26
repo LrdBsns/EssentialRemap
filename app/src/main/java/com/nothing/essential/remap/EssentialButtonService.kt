@@ -45,25 +45,21 @@ class EssentialButtonService : AccessibilityService() {
             flags = flags or
                 AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS or
                 AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
+            // Nur Window-Events – nicht VIEW_FOCUSED (spart viel CPU)
             eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or
-                AccessibilityEvent.TYPE_WINDOWS_CHANGED or
-                AccessibilityEvent.TYPE_VIEW_FOCUSED
+                AccessibilityEvent.TYPE_WINDOWS_CHANGED
             feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
             notificationTimeout = 0
         }
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        if (!prefs.isEnabled()) return
+        // Nur auswerten wenn wir aktiv supprimieren
         if (!shouldSuppressOverlay) return
-        if (event == null) return
-
-        val pkg = event.packageName?.toString() ?: return
+        if (!prefs.isEnabled()) return
+        val pkg = event?.packageName?.toString() ?: return
         if (pkg in NOTHING_OVERLAY_PACKAGES) {
-            // Rapid-fire BACK to kill the overlay as fast as possible
-            repeat(3) { i ->
-                handler.postDelayed({ performGlobalAction(GLOBAL_ACTION_BACK) }, (i * 16).toLong())
-            }
+            performGlobalAction(GLOBAL_ACTION_BACK)
         }
     }
 
@@ -93,26 +89,18 @@ class EssentialButtonService : AccessibilityService() {
             KeyEvent.ACTION_DOWN -> {
                 keyDownTime = System.currentTimeMillis()
                 shouldSuppressOverlay = true
-                // Pre-emptive BACK before Nothing even has time to show overlay
                 performGlobalAction(GLOBAL_ACTION_BACK)
-                handler.postDelayed({ performGlobalAction(GLOBAL_ACTION_BACK) }, 16)
-                handler.postDelayed({ performGlobalAction(GLOBAL_ACTION_BACK) }, 32)
-                handler.postDelayed({ performGlobalAction(GLOBAL_ACTION_BACK) }, 50)
                 true
             }
             KeyEvent.ACTION_UP -> {
                 val duration = System.currentTimeMillis() - keyDownTime
-                // Keep suppressing for 400ms after release
-                handler.postDelayed({ performGlobalAction(GLOBAL_ACTION_BACK) }, 16)
-                handler.postDelayed({ performGlobalAction(GLOBAL_ACTION_BACK) }, 50)
-                handler.postDelayed({ performGlobalAction(GLOBAL_ACTION_BACK) }, 100)
                 if (duration < 800L) {
                     handler.postDelayed({
                         shouldSuppressOverlay = false
                         handlePress()
-                    }, 200)
+                    }, 150)
                 } else {
-                    handler.postDelayed({ shouldSuppressOverlay = false }, 400)
+                    shouldSuppressOverlay = false
                 }
                 true
             }
