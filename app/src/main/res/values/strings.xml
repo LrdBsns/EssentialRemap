@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Essential Key</string>
+    <string name="accessibility_service_label">Essential Key Remapper</string>
+    <string name="accessibility_service_description">Intercepts the Nothing Phone Essential Key press to run custom actions or show a quick action panel.</string>
+</resources>

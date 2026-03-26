@@ -1,0 +1,2 @@
+-keep class com.nothing.essential.remap.** { *; }
+-keepclassmembers class com.nothing.essential.remap.** { *; }
