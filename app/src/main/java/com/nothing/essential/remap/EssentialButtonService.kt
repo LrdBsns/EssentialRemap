@@ -10,21 +10,13 @@ class EssentialButtonService : AccessibilityService() {
     companion object {
         var instance: EssentialButtonService? = null
 
-        // Possible keycodes used by Nothing's Essential Key across firmware versions
-        // KEYCODE_STEM_PRIMARY (265) is the standard Wear OS stem button, reused by some OEMs
-        // KEYCODE_PROG1-4 are commonly assigned to OEM custom buttons
         val CANDIDATE_KEYCODES = setOf(
-            KeyEvent.KEYCODE_STEM_PRIMARY,  // 265 – most likely
+            KeyEvent.KEYCODE_STEM_PRIMARY,  // 265 – most likely for Nothing Phone
             KeyEvent.KEYCODE_STEM_1,        // 266
             KeyEvent.KEYCODE_STEM_2,        // 267
-            KeyEvent.KEYCODE_PROG1,         // 249
-            KeyEvent.KEYCODE_PROG2,         // 250
-            KeyEvent.KEYCODE_PROG3,         // 251
-            KeyEvent.KEYCODE_PROG4,         // 252
-            KeyEvent.KEYCODE_F17,           // 131 – used by some OEMs
-            KeyEvent.KEYCODE_F18,           // 132
-            KeyEvent.KEYCODE_ASSIST,        // 219 – long-press assistant button fallback
+            KeyEvent.KEYCODE_ASSIST,        // 219
             KeyEvent.KEYCODE_SETTINGS,      // 176
+            249, 250, 251, 252              // KEYCODE_PROG1-4 raw values
         )
 
         var detectMode = false
@@ -36,7 +28,6 @@ class EssentialButtonService : AccessibilityService() {
 
     override fun onServiceConnected() {
         instance = this
-        // Ensure key-event filtering is enabled at runtime
         serviceInfo = serviceInfo?.apply {
             flags = flags or AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS
         }
@@ -45,7 +36,6 @@ class EssentialButtonService : AccessibilityService() {
     override fun onKeyEvent(event: KeyEvent): Boolean {
         val code = event.keyCode
 
-        // ── Detection mode: capture any key and report back ──────────────
         if (detectMode) {
             if (event.action == KeyEvent.ACTION_UP) {
                 detectMode = false
@@ -55,7 +45,6 @@ class EssentialButtonService : AccessibilityService() {
             return true
         }
 
-        // ── Normal mode ──────────────────────────────────────────────────
         if (!prefs.isEnabled()) return false
 
         val detectedCode = prefs.getDetectedCode()
